@@ -24,5 +24,15 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://vanbora_user:vanbora_pass@db:5432/vanbora
 
+  migrate:
+    build: .
+    command: poetry run python src/infra/migrate.py
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql+asyncpg://vanbora_user:vanbora_pass@db:5432/vanbora
+    volumes:
+      - .:/app
+
 volumes:
   postgres_data: 

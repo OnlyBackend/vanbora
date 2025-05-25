@@ -1,6 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from sqlalchemy.future import select
 from sqlalchemy import update, delete
+from sqlalchemy import delete as sqla_delete
 from src.domain.models import User, Trip, Reservation
 from typing import List, Optional
 
@@ -42,8 +44,15 @@ class TripRepository:
         return await TripRepository.get_by_id(db, trip_id)
 
     @staticmethod
-    async def delete(db: AsyncSession, trip_id: int):
-        await db.execute(delete(Trip).where(Trip.id == trip_id))
+    async def delete(db: AsyncSession, trip_id: int) -> None:
+        # Deleta as reservas associadas primeiro
+        await db.execute(
+            sqla_delete(Reservation).where(Reservation.trip_id == trip_id)
+        )
+        # Deleta a viagem
+        await db.execute(
+            sqla_delete(Trip).where(Trip.id == trip_id)
+        )
         await db.commit()
 
 class ReservationRepository:
@@ -61,5 +70,10 @@ class ReservationRepository:
 
     @staticmethod
     async def list_by_trip(db: AsyncSession, trip_id: int) -> List[Reservation]:
-        result = await db.execute(select(Reservation).where(Reservation.trip_id == trip_id))
-        return result.scalars().all() 
+        stmt = (
+            select(Reservation)
+            .options(selectinload(Reservation.user))
+            .where(Reservation.trip_id == trip_id)
+        )
+        result = await db.execute(stmt)
+        return result.scalars().all()

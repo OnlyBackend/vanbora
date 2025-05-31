@@ -1,0 +1,76 @@
+# === Python ===
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.env
+*.log
+*.sqlite3
+*.db
+
+# Byte-compiled / optimized / DLL files
+*.so
+
+# Virtual environments (caso use algum local)
+venv/
+.env/
+.venv/
+
+# === Poetry ===
+poetry.lock
+poetry.toml  # se não for usado
+
+# === FastAPI / General Configs ===
+*.env
+.env.*
+
+# === VS Code ===
+.vscode/
+*.code-workspace
+
+# === macOS ===
+.DS_Store
+
+# === Docker ===
+*.pid
+*.seed
+docker-compose.override.yml
+
+# === PostgreSQL dumps ===
+*.dump
+*.sql
+
+# === Test / Coverage ===
+.coverage
+htmlcov/
+.tox/
+.pytest_cache/
+
+# === Mypy / Lint / Static Analysis ===
+.mypy_cache/
+.dmypy.json
+.pyre/
+
+# === Build / Distribution ===
+build/
+dist/
+*.egg-info/
+
+# === Editor backups ===
+*~
+*.swp
+*.swo
+
+# === Logs ===
+*.log
+
+# === Arquivos de debug temporários ===
+debug.log
+*.bak
+
+# === PyCharm ===
+.idea/
+
+# === Outros possíveis ===
+__init__.pyc
+test.db

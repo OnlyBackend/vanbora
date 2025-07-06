@@ -1,3 +1,4 @@
+from enum import Enum
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 from datetime import date, time, datetime
@@ -41,11 +42,19 @@ class ReservationBase(BaseModel):
 class ReservationCreate(ReservationBase):
     pass
 
+class ReservationStatus(str, Enum):
+    CONFIRMED = "CONFIRMED"
+    CANCELLED = "CANCELLED"
+
 class ReservationOut(ReservationBase):
     id: int
     user_id: int
     trip_id: int
     created_at: datetime
+    status: ReservationStatus
+
+    user: UserOut
+    trip: TripOut 
 
     class Config:
-        orm_mode = True 
+        orm_mode = True

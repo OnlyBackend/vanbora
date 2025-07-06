@@ -1,5 +1,10 @@
 FROM python:3.10-slim
 
+# Define o fuso horário para o contêiner
+ENV TZ=America/Sao_Paulo
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+
 WORKDIR /app
 
 # Instala dependências do sistema

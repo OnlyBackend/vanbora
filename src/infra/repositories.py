@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload 
 from sqlalchemy.future import select
-from sqlalchemy import update, delete # Mantenha estas importações
+from sqlalchemy import update, delete 
 # from sqlalchemy import delete as sqla_delete 
 from src.domain.models import User, Trip, Reservation
 from typing import List, Optional

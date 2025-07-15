@@ -40,7 +40,7 @@ async def list_reservations(db: AsyncSession = Depends(get_db), current_user: Us
 async def cancel_reservation(
     reservation_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user) # <--- Usar o get_current_active_user
+    current_user: User = Depends(get_current_active_user) 
 ):
 
     reservation = await ReservationRepository.get_by_id(db, reservation_id)
@@ -86,7 +86,7 @@ async def cancel_reservation(
     if now > cancellation_deadline:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Não é possível cancelar a reserva: o prazo de cancelamento ({CANCELLATION_WINDOW_HOURS} horas antes da viagem) já passou."
+            detail=f"Não foi possível cancelar a reserva: o prazo de cancelamento (até {CANCELLATION_WINDOW_HOURS} horas antes da viagem) já expirou."
         )
 
     updated_reservation = await ReservationRepository.update(

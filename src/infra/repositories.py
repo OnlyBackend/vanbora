@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload 
 from sqlalchemy.future import select
 from sqlalchemy import update, delete 
-# from sqlalchemy import delete as sqla_delete 
+from sqlalchemy import delete as sqla_delete 
 from src.domain.models import User, Trip, Reservation
 from typing import List, Optional
 
@@ -92,7 +92,7 @@ class ReservationRepository:
         result = await db.execute(
             select(Reservation)
             .where(Reservation.id == reservation_id)
-            .options(selectinload(Reservation.user), selectinload(Reservation.trip)) # CARREGAMENTO ANSIOSO
+            .options(selectinload(Reservation.user), selectinload(Reservation.trip))
         )
         return result.scalars().first()
 
@@ -102,6 +102,6 @@ class ReservationRepository:
         result = await db.execute(
             select(Reservation)
             .where(Reservation.id == reservation_id)
-            .options(selectinload(Reservation.user), selectinload(Reservation.trip)) # CARREGAMENTO ANSIOSO
+            .options(selectinload(Reservation.user), selectinload(Reservation.trip)) 
         )
         return result.scalars().first()

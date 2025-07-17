@@ -16,7 +16,7 @@ pydantic = {extras = ["email"], version = "^2.11.4"}
 psycopg2-binary = "^2.9.9"
 python-multipart = "^0.0.20"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^8.1.1"
 
 [build-system]

@@ -1,6 +1,8 @@
 from sqlalchemy import Column, Integer, String, Boolean, Date, Time, ForeignKey, DateTime
 from sqlalchemy.orm import relationship, declarative_base
 from sqlalchemy.sql import func
+from enum import Enum as PyEnum
+from sqlalchemy import Enum
 
 Base = declarative_base()
 
@@ -30,12 +32,17 @@ class Trip(Base):
     driver = relationship("User", back_populates="trips")
     reservations = relationship("Reservation", back_populates="trip")
 
+class ReservationStatusEnum(PyEnum):
+    CONFIRMED = "CONFIRMED" 
+    CANCELLED = "CANCELLED"  
+
 class Reservation(Base):
     __tablename__ = "reservations"
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     trip_id = Column(Integer, ForeignKey("trips.id"))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    status = Column(Enum(ReservationStatusEnum), default=ReservationStatusEnum.CONFIRMED, nullable=False)
 
     user = relationship("User", back_populates="reservations")
-    trip = relationship("Trip", back_populates="reservations") 
+    trip = relationship("Trip", back_populates="reservations")

@@ -100,8 +100,8 @@ async def cancel_reservation(
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
-@router.put("/reservations/{reservation_id}/alter/", response_model=ReservationOut)
-async def alter_reservation(
+@router.put("/reservations/{reservation_id}/edit/", response_model=ReservationOut)
+async def edit_reservation(
         reservation_id: int,
         update_payload: ReservationUpdate,
         db: AsyncSession = Depends(get_db),
@@ -118,14 +118,14 @@ async def alter_reservation(
     if reservation.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Você não tem permissão para alterar esta reserva."
+            detail="Você não tem permissão para editar esta reserva."
         )
 
 
     if reservation.status != ReservationStatusEnum.CONFIRMED:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Não é possível alterar: reserva não está no status 'CONFIRMED'."
+            detail="Não é possível editar: reserva não está no status 'CONFIRMED'."
         )
     
     old_trip = await TripRepository.get_by_id(db, reservation.trip_id)
@@ -141,7 +141,7 @@ async def alter_reservation(
     if now_utc >= old_trip_datetime_utc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Não é possível alterar reserva de viagem já iniciada ou passada. Viagem: {old_trip_datetime_utc}, Agora: {now_utc}"
+            detail=f"Não é possível editar reserva de viagem já iniciada ou passada. Viagem: {old_trip_datetime_utc}, Agora: {now_utc}"
         )
     
 
@@ -150,7 +150,7 @@ async def alter_reservation(
         if now_utc > alteration_deadline_utc:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Prazo para alterar a reserva original expirou. Alterações permitidas até {CANCELLATION_WINDOW_HOURS} horas antes da viagem. Prazo: {alteration_deadline_utc}, Agora: {now_utc}"
+                detail=f"Prazo para editar a reserva original expirou. edições permitidas até {CANCELLATION_WINDOW_HOURS} horas antes da viagem. Prazo: {alteration_deadline_utc}, Agora: {now_utc}"
             )
 
     new_trip = await TripRepository.get_by_id(db, update_payload.new_trip_id)
@@ -163,14 +163,14 @@ async def alter_reservation(
     if old_trip.id == new_trip.id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Não é possível alterar a reserva para a mesma viagem."
+            detail="Não é possível editar a reserva para a mesma viagem."
         )
 
 
     if old_trip.driver_id != new_trip.driver_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="A nova viagem deve ser do mesmo motorista da viagem original."
+            detail="A nova viagem deve ser do mesmo responsável da viagem original."
         )
 
 
@@ -185,7 +185,7 @@ async def alter_reservation(
     if now_utc >= new_trip_datetime_utc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Não é possível alterar para uma viagem que já iniciou ou passou. Nova Viagem: {new_trip_datetime_utc}, Agora: {now_utc}"
+            detail=f"Não é possível editar para uma viagem que já iniciou ou passou. Nova Viagem: {new_trip_datetime_utc}, Agora: {now_utc}"
         )
     
     await TripRepository.update(db, old_trip.id, {"available_seats": old_trip.available_seats + 1})

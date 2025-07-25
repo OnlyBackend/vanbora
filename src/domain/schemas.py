@@ -58,3 +58,6 @@ class ReservationOut(ReservationBase):
 
     class Config:
         orm_mode = True
+
+class ReservationUpdate(BaseModel):
+    new_trip_id: int

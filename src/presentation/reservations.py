@@ -1,16 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
-from src.domain.schemas import ReservationOut, ReservationStatus
+from src.domain.schemas import ReservationOut, ReservationStatus, ReservationUpdate
 from src.domain.models import Reservation, Trip, User, ReservationStatusEnum
 from src.infra.database import get_db
 from src.infra.auth import get_current_active_user
 from src.infra.repositories import ReservationRepository, TripRepository
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 router = APIRouter()
 
 CANCELLATION_WINDOW_HOURS = 2
+ENABLE_ALTERATION_DEADLINE = True
 
 @router.post("/trips/{trip_id}/reserve/", response_model=ReservationOut)
 async def reserve_trip(trip_id: int, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_active_user)):
@@ -98,3 +99,99 @@ async def cancel_reservation(
     )
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+@router.put("/reservations/{reservation_id}/edit/", response_model=ReservationOut)
+async def edit_reservation(
+        reservation_id: int,
+        update_payload: ReservationUpdate,
+        db: AsyncSession = Depends(get_db),
+        current_user: User = Depends(get_current_active_user)
+):
+
+    reservation = await ReservationRepository.get_by_id(db, reservation_id)
+    if not reservation:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Reserva não encontrada."
+        )
+
+    if reservation.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Você não tem permissão para editar esta reserva."
+        )
+
+
+    if reservation.status != ReservationStatusEnum.CONFIRMED:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Não é possível editar: reserva não está no status 'CONFIRMED'."
+        )
+    
+    old_trip = await TripRepository.get_by_id(db, reservation.trip_id)
+    if not old_trip:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Erro interno: Viagem original da reserva não encontrada (integridade de dados comprometida)."
+        )
+
+    old_trip_datetime_utc = datetime.combine(old_trip.date, old_trip.time, tzinfo=timezone.utc)
+    now_utc = datetime.now(timezone.utc)
+
+    if now_utc >= old_trip_datetime_utc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Não é possível editar reserva de viagem já iniciada ou passada. Viagem: {old_trip_datetime_utc}, Agora: {now_utc}"
+        )
+    
+
+    if ENABLE_ALTERATION_DEADLINE:
+        alteration_deadline_utc = old_trip_datetime_utc - timedelta(hours=CANCELLATION_WINDOW_HOURS)
+        if now_utc > alteration_deadline_utc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Prazo para editar a reserva original expirou. edições permitidas até {CANCELLATION_WINDOW_HOURS} horas antes da viagem. Prazo: {alteration_deadline_utc}, Agora: {now_utc}"
+            )
+
+    new_trip = await TripRepository.get_by_id(db, update_payload.new_trip_id)
+    if not new_trip:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Nova viagem especificada não encontrada."
+        )
+    
+    if old_trip.id == new_trip.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Não é possível editar a reserva para a mesma viagem."
+        )
+
+
+    if old_trip.driver_id != new_trip.driver_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A nova viagem deve ser do mesmo responsável da viagem original."
+        )
+
+
+    if new_trip.available_seats <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A viagem escolhida não tem mais vagas disponíveis."
+        )
+    
+    new_trip_datetime_utc = datetime.combine(new_trip.date, new_trip.time, tzinfo=timezone.utc)
+    
+    if now_utc >= new_trip_datetime_utc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Não é possível editar para uma viagem que já iniciou ou passou. Nova Viagem: {new_trip_datetime_utc}, Agora: {now_utc}"
+        )
+    
+    await TripRepository.update(db, old_trip.id, {"available_seats": old_trip.available_seats + 1})
+    updated_reservation = await ReservationRepository.update(
+        db, reservation_id, {"trip_id": new_trip.id}
+    )
+    await TripRepository.update(db, new_trip.id, {"available_seats": new_trip.available_seats - 1})
+    
+    return updated_reservation 

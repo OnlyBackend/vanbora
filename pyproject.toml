@@ -2,7 +2,7 @@
 name = "vanbora_app"
 version = "0.1.0"
 description = "Sistema de reserva digital para transporte alternativo (van)"
-authors = ["Seu Nome <seu@email.com>"]
+authors = ["Anatiel Santos <anatielsantos@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.10"

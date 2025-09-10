@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: vanbora-api
+  namespace: vanbora
+  labels:
+    app: vanbora-api
+spec:
+  selector:
+    app: vanbora-api
+  ports:
+    - port: 8000
+      targetPort: 8000

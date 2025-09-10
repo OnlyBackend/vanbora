@@ -7,6 +7,6 @@ from datetime import timedelta
 
 router = APIRouter()
 
-@router.post("/health")
+@router.get("/health/")
 async def health_check():
     return {"status": "healthy"}

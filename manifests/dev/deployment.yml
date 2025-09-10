@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: vanbora-api
-          image: registry.digitalocean.com/cerebrum-registry/vanbora_dev:latest
+          image: registry.digitalocean.com/cerebrum-registry/vanbora_prod:latest
           envFrom:
           - secretRef:
               name: doppler-secret

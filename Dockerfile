@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM python:3.10-slim as dev
 
 # Define o fuso horário para o contêiner
 ENV TZ=America/Sao_Paulo
@@ -32,3 +32,6 @@ COPY . /app
 ENV PYTHONPATH=/app
 
 CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"] 
+
+FROM dev as prod
+ENTRYPOINT [ "doppler", "run", "--"]

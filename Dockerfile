@@ -35,3 +35,4 @@ CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 FROM dev as prod
 ENTRYPOINT [ "doppler", "run", "--"]
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"] 

@@ -1,0 +1,62 @@
+name: Pipeline CI/CD for Production
+run-name: Pipeline CI/CD executed by ${{ github.actor }} in ${{ github.run_number }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to deploy'
+        required: true
+        default: 'main'
+  push:
+    branches:
+      - main
+
+env:
+  VERSION_TAG: registry.digitalocean.com/cerebrum-registry/vanbora_prod:${{ github.sha }}
+  LATEST_TAG: registry.digitalocean.com/cerebrum-registry/vanbora_prod:latest
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker config
+        run: |
+          mkdir -p ~/.docker
+          echo '${{ secrets.DOCKER_CONFIG_JSON }}' > ~/.docker/config.json
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          target: prod
+          push: true
+          tags: |
+            ${{ env.VERSION_TAG }}
+            ${{ env.LATEST_TAG }}
+      
+      - name: Set up kubeconfig
+        uses: azure/k8s-set-context@v4.0.1
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBE_CONFIG }}
+        
+        # run: |
+        #   mkdir -p ~/.kube
+        #   echo "${{ secrets.KUBE_CONFIG }}" > ~/.kube/config
+        #   chmod 600 ~/.kube/config
+      
+      - uses: azure/k8s-create-secret@v5
+        with:
+          namespace: 'vanbora'
+          secret-type: 'generic'
+          secret-name: doppler-secret
+          string-data: '{"DOPPLER_TOKEN":"${{ secrets.DOPPLER_KEY }}"}'
+
+      - name: Deploy to Kubernetes 
+        uses: Azure/k8s-deploy@v5
+        with:
+          manifests: manifests/
+          images: ${{ env.VERSION_TAG }}

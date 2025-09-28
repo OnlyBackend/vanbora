@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vanbora-api
+  namespace: vanbora
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vanbora-api
+  template:
+    metadata:
+      name: vanbora-api
+      labels:
+        app: vanbora-api
+    spec:
+      containers:
+        - name: vanbora-api
+          image: registry.digitalocean.com/cerebrum-registry/vanbora_prod:latest
+          envFrom:
+          - secretRef:
+              name: doppler-secret
+          env:
+          - name: POD_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP
+          ports:
+            - containerPort: 8000
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health/
+              port: 8000
+            initialDelaySeconds: 60
+            timeoutSeconds: 120
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health/
+              port: 8000
+            initialDelaySeconds: 5
+            timeoutSeconds: 120
+            periodSeconds: 5
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "0.3"
+            limits:
+              memory: "256Mi"
+              cpu: "0.3"
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1

@@ -25,7 +25,9 @@ services:
       DATABASE_URL: postgresql+asyncpg://vanbora_user:vanbora_pass@db:5432/vanbora
 
   migrate:
-    build: .
+    build:
+      context: .
+      target: dev
     command: bash -c "PYTHONPATH=/app poetry run python src/infra/migrate.py"
     depends_on:
       - db

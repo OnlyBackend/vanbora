@@ -3,6 +3,7 @@ name = "vanbora_app"
 version = "0.1.0"
 description = "Sistema de reserva digital para transporte alternativo (van)"
 authors = ["Anatiel Santos <anatielsantos@gmail.com>"]
+packages = [{ include = "src" }]
 
 [tool.poetry.dependencies]
 python = "^3.10"
@@ -15,9 +16,11 @@ passlib = {extras = ["bcrypt"], version = "^1.7.4"}
 pydantic = {extras = ["email"], version = "^2.11.4"}
 psycopg2-binary = "^2.9.9"
 python-multipart = "^0.0.20"
+mercadopago = "^2.3.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.1.1"
+alembic = "^1.13.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

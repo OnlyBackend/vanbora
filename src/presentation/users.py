@@ -17,7 +17,9 @@ async def register_user(user_in: UserCreate, db: AsyncSession = Depends(get_db))
         username=user_in.username,
         email=user_in.email,
         hashed_password=get_password_hash(user_in.password),
-        is_driver=user_in.is_driver
+        is_driver=user_in.is_driver,
+        pix_key=user_in.pix_key if user_in.is_driver else None,  # só motorista
+        balance=0 
     )
     user = await UserRepository.create(db, user)
     return user

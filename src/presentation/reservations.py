@@ -340,32 +340,32 @@ async def edit_reservation(
     
     return updated_reservation 
 
-@router.delete("/reservations/{reservation_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_reservation(
-    reservation_id: int,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    # Busca reserva
-    reservation = await ReservationRepository.get_by_id(db, reservation_id)
-    if not reservation:
-        raise HTTPException(status_code=404, detail="Reservation not found")
+# @router.delete("/reservations/{reservation_id}", status_code=status.HTTP_204_NO_CONTENT)
+# async def delete_reservation(
+#     reservation_id: int,
+#     db: AsyncSession = Depends(get_db),
+#     current_user: User = Depends(get_current_active_user)
+# ):
+#     # Busca reserva
+#     reservation = await ReservationRepository.get_by_id(db, reservation_id)
+#     if not reservation:
+#         raise HTTPException(status_code=404, detail="Reservation not found")
 
-    # Busca viagem relacionada
-    trip = await TripRepository.get_by_id(db, reservation.trip_id)
+#     # Busca viagem relacionada
+#     trip = await TripRepository.get_by_id(db, reservation.trip_id)
 
-    # Autorização: dono da reserva ou motorista da viagem
-    if reservation.user_id != current_user.id and trip.driver_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to delete this reservation")
+#     # Autorização: dono da reserva ou motorista da viagem
+#     if reservation.user_id != current_user.id and trip.driver_id != current_user.id:
+#         raise HTTPException(status_code=403, detail="Not authorized to delete this reservation")
 
-    # Devolve assento
-    await TripRepository.update(
-        db,
-        trip.id,
-        {"available_seats": trip.available_seats + 1}
-    )
+#     # Devolve assento
+#     await TripRepository.update(
+#         db,
+#         trip.id,
+#         {"available_seats": trip.available_seats + 1}
+#     )
 
-    # Remove reserva
-    await ReservationRepository.delete(db, reservation.id)
+#     # Remove reserva
+#     await ReservationRepository.delete(db, reservation.id)
 
-    return {"detail": "Reservation deleted successfully"}
+#     return {"detail": "Reservation deleted successfully"}

@@ -51,7 +51,6 @@ class PaymentStatusEnum(PyEnum):
     #CHARGED_BACK = "charged_back"
 
 class PaymentMethodEnum(PyEnum):
-    CASH = "CASH"
     PIX = "PIX"
     #CREDIT_CARD = "CREDIT_CARD"
 

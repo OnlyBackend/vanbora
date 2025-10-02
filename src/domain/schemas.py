@@ -9,9 +9,8 @@ class ReservationStatus(str, Enum):
     CANCELLED = "CANCELLED"
 
 class PaymentMethod(str, Enum):
-    CASH = "CASH"
     PIX = "PIX"
-    CREDIT_CARD = "CREDIT_CARD"
+    #CREDIT_CARD = "CREDIT_CARD"
 
 class PaymentStatus(str, Enum):
     PENDING = "PENDING"

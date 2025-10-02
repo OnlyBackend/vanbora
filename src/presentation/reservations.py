@@ -40,58 +40,44 @@ async def reserve_trip(
     if any(r.user_id == current_user.id for r in reservations):
         raise HTTPException(status_code=400, detail="You already have a reservation for this trip")
 
-    # 3. Cria reserva
+    # 3. Cria reserva com status PENDING por padrão
     reservation = Reservation(
         user_id=current_user.id,
         trip_id=trip_id,
-        payment_method=payload.payment_method,
+        payment_method=PaymentMethod.PIX,
         price_at_reservation=trip.price,
-        status=ReservationStatus.CONFIRMED,  # padrão inicial
+        status=ReservationStatus.CONFIRMED,  # reserva já registrada
+        payment_status=PaymentStatus.PENDING,  # aguardando pagamento PIX
     )
-
-    # Dinheiro = aprovado direto, senão pendente
-    reservation.payment_status = (
-        PaymentStatus.APPROVED
-        if payload.payment_method == PaymentMethod.CASH
-        else PaymentStatus.PENDING
-    )
-
     reservation = await ReservationRepository.create(db, reservation)
 
-    # 4. Caso PIX → cria pagamento no Mercado Pago
-    if payload.payment_method == PaymentMethod.PIX:
-        payment_data = {
-            "transaction_amount": float(trip.price),
-            "description": f"Reserva VanBora - Trip {trip_id}",
-            "payment_method_id": "pix",
-            "payer": {"email": current_user.email},
-            "binary_mode": True,
-            "notification_url": NOTIFICATION_URL,
+    # 4. Cria pagamento no Mercado Pago (PIX)
+    payment_data = {
+        "transaction_amount": float(trip.price),
+        "description": f"Reserva VanBora - Trip {trip_id}",
+        "payment_method_id": "pix",
+        "payer": {"email": current_user.email},
+        "binary_mode": True,
+        "notification_url": NOTIFICATION_URL,
+    }
+    mp_response = sdk.payment().create(payment_data)
+    mp_payment = mp_response["response"]
+
+    # Atualiza reserva com dados do pagamento PIX
+    reservation = await ReservationRepository.update(
+        db,
+        reservation.id,
+        {
+            "payment_id": str(mp_payment.get("id")),
+            "payment_status": PaymentStatus.PENDING,
         }
-        mp_response = sdk.payment().create(payment_data)
-        mp_payment = mp_response["response"]
+    )
 
-        # Atualiza reserva com dados do pagamento
-        reservation = await ReservationRepository.update(
-            db,
-            reservation.id,
-            {
-                "payment_id": str(mp_payment.get("id")),
-                "payment_status": PaymentStatus.PENDING,
-            }
-        )
-
-        return ReservationResponse(
-            reservation=ReservationOut.from_orm(reservation),
-            pix_qr_code=mp_payment["point_of_interaction"]["transaction_data"]["qr_code_base64"],
-            pix_copia_cola=mp_payment["point_of_interaction"]["transaction_data"]["qr_code"],
-        )
-    # só reduz assento se pagamento NÃO for PIX
-    if payload.payment_method == PaymentMethod.CASH:
-        await TripRepository.update(db, trip_id, {"available_seats": trip.available_seats - 1})
-
-
-    return ReservationResponse(reservation=reservation)
+    return ReservationResponse(
+        reservation=ReservationOut.from_orm(reservation),
+        pix_qr_code=mp_payment["point_of_interaction"]["transaction_data"]["qr_code_base64"],
+        pix_copia_cola=mp_payment["point_of_interaction"]["transaction_data"]["qr_code"],
+    )
 
 @router.post("/webhook/mercadopago")
 async def webhook_mercadopago(

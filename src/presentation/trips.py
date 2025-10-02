@@ -35,6 +35,7 @@ async def update_trip(trip_id: int, trip_in: TripCreate, db: AsyncSession = Depe
     trip = await TripRepository.get_by_id(db, trip_id)
     if not trip or trip.driver_id != current_driver.id:
         raise HTTPException(status_code=404, detail="Trip not found or not allowed")
+
     updated = await TripRepository.update(db, trip_id, trip_in.dict())
     return updated
 

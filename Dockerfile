@@ -21,11 +21,13 @@ rm -rf /var/lib/apt/lists/*
 # Instala Poetry
 RUN pip install --upgrade pip && pip install poetry
 
-# Copia arquivos do projeto
-COPY pyproject.toml poetry.lock* /app/
+# Copia apenas os arquivos do poetry primeiro
+COPY pyproject.toml poetry.lock* ./
 
-# Instala dependências do projeto
-RUN poetry config virtualenvs.create false && poetry install --no-root --no-interaction --no-ansi
+# Instala dependências no container
+RUN poetry config virtualenvs.create false \
+    && poetry install --no-root --no-interaction --no-ansi
+
 
 COPY . /app
 

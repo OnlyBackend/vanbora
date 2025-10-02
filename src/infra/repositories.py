@@ -105,3 +105,9 @@ class ReservationRepository:
             .options(selectinload(Reservation.user), selectinload(Reservation.trip)) 
         )
         return result.scalars().first()
+    
+    # @staticmethod
+    # async def delete(db, reservation_id: int):
+    #     query = delete(Reservation).where(Reservation.id == reservation_id)
+    #     await db.execute(query)
+    #     await db.commit()
